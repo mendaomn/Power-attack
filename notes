@@ -1,0 +1,7 @@
+L15 = R16 + P(SBoxes(E(R15)+K16)) = R16 + P(SBoxes(E(L16)+K16))
+where L16 = right_half(IP(ct))
+since Li = Ri-1, 1 <= i <= 16
+
+P^-1(L15) = P^-1(R16) + SBoxes(E(16)+K16)
+
+inverting P over L15 allows me to find output of each sbox in its correct position (e.g. first sbox in first bits)
