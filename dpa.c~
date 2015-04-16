@@ -259,7 +259,7 @@ dpa_attack (void)
 
   uint64_t ct;                  /* Ciphertext */
   tr_pcc_context pcc_ctx;
-  float *pcc, best_pcc;
+  float *pcc, *best_pcc;
 
   n = tr_number (ctx);          /* Number of traces in context */
   
@@ -281,8 +281,8 @@ dpa_attack (void)
 	}                           /* End for experiments */
 	tr_pcc_consolidate(ctx);
 	pcc = tr_pcc_get_pcc(ctx, 0);
-	if (*pcc > best_pcc){
-		best_pcc = *pcc;
+	if (pcc > best_pcc){
+		best_pcc = pcc;
 		best_guess = g;
     }
   }                       /* End for guesses */
