@@ -294,7 +294,7 @@ dpa_attack (void)
   for (g = 0; g < 64; g++)      /* For all guesses for 6-bits subkey */
     {
       tr_scalar_div (ctx, t0[g], t0[g], (float) (n0[g]));       /* Normalize zero-set */
-      tr_scalar_div (ctx, t1[g], t1[g], (float) (n1[g]));       /* Normalize zero-set */
+      tr_scalar_div (ctx, t1[g], t1[g], (float) (n1[g]));       /* Normalize one-set */
       tr_sub (ctx, dpa[g], t1[g], t0[g]);       /* Compute one-set minus zero-set */
       max = tr_max (ctx, dpa[g], &idx); /* Get max and argmax of DPA trace */
       if (max > best_max || g == 0)     /* If better than current best max (or if first guess) */
