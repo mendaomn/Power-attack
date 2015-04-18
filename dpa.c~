@@ -60,9 +60,9 @@ main (int argc, char **argv)
       ERROR (-1, "DES functional test failed");
     }
 
-  if (argc != 4)
+  if (argc != 3)
     {
-      ERROR (-1, "usage: dpa <file> <n> <b>\n  <file>: name of the traces file in HWSec format\n          (e.g. /datas/teaching/courses/HWSec/labs/data/HWSecTraces10000x00800.hws)\n  <n>: number of experiments to use\n  <b>: index of target bit in L15 (1 to 32, as in DES standard)\n");
+      ERROR (-1, "usage: dpa <file> <n>\n  <file>: name of the traces file in HWSec format\n          (e.g. /datas/teaching/courses/HWSec/labs/data/HWSecTraces10000x00800.hws)\n  <n>: number of experiments to use\n");
     }
 
   n = atoi (argv[2]); /* Number of experiments to use */
@@ -130,8 +130,7 @@ dpa_attack (void)
 			tr_pcc_insert_x(pcc_ctx, t);
 			for (g = 0; g < 64; g++){
 				key = ((uint64_t) g) << (42 - 6*sbox); 
-				final_key |= key;
-				sbo = des_sboxes (des_e (l16) ^ final_key);  
+				sbo = des_sboxes (des_e (l16) ^ (final_key | key));  
 				hw = hamming_weight (sbo); 
 				
 				tr_pcc_insert_y(pcc_ctx, g, hw);
@@ -149,6 +148,8 @@ dpa_attack (void)
 			}
 		}
 		tr_pcc_free(pcc_ctx);
-		printf ("%012" PRIx64 "\n", best_key);	
+		printf("pcc max: %f > %f\n",max);
+		final_key |= best_key;
+		printf ("%012" PRIx64 "\n", final_key);	
     }
 }

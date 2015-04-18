@@ -130,8 +130,7 @@ dpa_attack (void)
 			tr_pcc_insert_x(pcc_ctx, t);
 			for (g = 0; g < 64; g++){
 				key = ((uint64_t) g) << (42 - 6*sbox); 
-				final_key |= key;
-				sbo = des_sboxes (des_e (l16) ^ final_key);  
+				sbo = des_sboxes (des_e (l16) ^ (final_key | key));  
 				hw = hamming_weight (sbo); 
 				
 				tr_pcc_insert_y(pcc_ctx, g, hw);
@@ -149,6 +148,8 @@ dpa_attack (void)
 			}
 		}
 		tr_pcc_free(pcc_ctx);
-		printf ("%012" PRIx64 "\n", best_key);	
+		printf("pcc max: %f\n",max);
+		final_key |= best_key;
+		printf ("%012" PRIx64 "\n", final_key);	
     }
 }
