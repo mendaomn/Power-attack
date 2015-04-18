@@ -96,79 +96,28 @@ main (int argc, char **argv)
   int n;                        /* Number of experiments to use. */
   int g;                        /* Guess on a 6-bits subkey */
 
-  /************************************************************************/
-  /* Before doing anything else, check the correctness of the DES library */
-  /************************************************************************/
   if (!des_check ())
     {
       ERROR (-1, "DES functional test failed");
     }
 
-  /*************************************/
-  /* Check arguments and read datafile */
-  /*************************************/
-  /* If invalid number of arguments (including program name), exit with error
-   * message. */
   if (argc != 4)
     {
       ERROR (-1, "usage: dpa <file> <n> <b>\n  <file>: name of the traces file in HWSec format\n          (e.g. /datas/teaching/courses/HWSec/labs/data/HWSecTraces10000x00800.hws)\n  <n>: number of experiments to use\n  <b>: index of target bit in L15 (1 to 32, as in DES standard)\n");
     }
-  /* Number of experiments to use is argument #2, convert it to integer and
-   * store the result in variable n. */
-  n = atoi (argv[2]);
+
+  n = atoi (argv[2]); /* Number of experiments to use */
   if (n < 1)                    /* If invalid number of experiments. */
     {
       ERROR (-1, "invalid number of experiments: %d (shall be greater than 1)", n);
     }
-  /* Target bit is argument #3, convert it to integer and store the result in
-   * variable target_bit. */
-  target_bit = atoi (argv[3]);
-  if (target_bit < 1 || target_bit > 32)        /* If invalid target bit index. */
-    {
-      ERROR (-1, "invalid target bit index: %d (shall be between 1 and 32 included)", target_bit);
-    }
-  /* Compute index of corresponding SBox */
-  target_sbox = (p_table[target_bit - 1] - 1) / 4 + 1;
+ 
   /* Read power traces and ciphertexts. Name of data file is argument #1. n is
    * the number of experiments to use. */
   read_datafile (argv[1], n);
-
-  /*****************************************************************************
-   * Compute and print average power trace. Store average trace in file
-   * "average.dat" and gnuplot command in file "average.cmd". In order to plot
-   * the average power trace, type: $ gnuplot -persist average.cmd
-   *****************************************************************************/
-  average ("average");
-
-  /***************************************************************
-   * Attack target bit in L15=R14 with P. Kocher's DPA technique *
-   ***************************************************************/
+   
   dpa_attack ();
 
-  /*****************************************************************************
-   * Print the 64 DPA traces in a data file named dpa.dat. Print corresponding
-   * gnuplot commands in a command file named dpa.cmd. All DPA traces are
-   * plotted in blue but the one corresponding to the best guess which is
-   * plotted in red with the title "Trace X (0xY)" where X and Y are the decimal
-   * and heaxdecimal forms of the 6 bits best guess.
-   *****************************************************************************/
-  /* Plot DPA traces in dpa.dat, gnuplot commands in dpa.cmd */
-  tr_plot (ctx, "dpa", 64, best_guess, dpa);
-
-  /*****************
-   * Print summary *
-   *****************/
-  printf ("Target bit: %d\n", target_bit);
-  printf ("Target SBox: %d\n", target_sbox);
-  printf ("Best guess: %d (0x%02x)\n", best_guess, best_guess);
-  printf ("Maximum of DPA trace: %e\n", best_max);
-  printf ("Index of maximum in DPA trace: %d\n", best_idx);
-  printf ("DPA traces stored in file 'dpa.dat'. In order to plot them, type:\n");
-  printf ("$ gnuplot -persist dpa.cmd\n");
-
-  /*************************
-   * Free allocated traces *
-   *************************/
   for (g = 0; g < 64; g++)      /* For all guesses for 6-bits subkey */
     {
       tr_free_trace (ctx, dpa[g]);
@@ -192,106 +141,48 @@ read_datafile (char *name, int n)
 }
 
 void
-average (char *prefix)
-{
-  int i;                        /* Loop index */
-  int n;                        /* Number of traces. */
-  float *sum;                   /* Power trace for the sum */
-  float *avg;                   /* Power trace for the average */
-
-  n = tr_number (ctx);          /* Number of traces in context */
-  sum = tr_new_trace (ctx);     /* Allocate a new power trace for the sum. */
-  avg = tr_new_trace (ctx);     /* Allocate a new power trace for the average. */
-  tr_init_trace (ctx, sum, 0.0);        /* Initialize sum trace to all zeros. */
-  for (i = 0; i < n; i++)       /* For all power traces */
-    {
-      tr_acc (ctx, sum, tr_trace (ctx, i));     /* Accumulate trace #i to sum */
-    }                           /* End for all power traces */
-  /* Divide trace sum by number of traces and put result in trace avg */
-  tr_scalar_div (ctx, avg, sum, (float) (n));
-  tr_plot (ctx, prefix, 1, -1, &avg);
-  printf ("Average power trace stored in file '%s.dat'. In order to plot it, type:\n", prefix);
-  printf ("$ gnuplot -persist %s.cmd\n", prefix);
-  tr_free_trace (ctx, sum);     /* Free sum trace */
-  tr_free_trace (ctx, avg);     /* Free avg trace */
-}
-
-void
-decision (uint64_t ct, int d[64])
-{
-  int g;                        /* Guess */
-  uint64_t r16l16;              /* R16|L16 (64 bits state register before final permutation) */
-  uint64_t l16;                 /* L16 (as in DES standard) */
-  uint64_t r16;                 /* R16 (as in DES standard) */
-  uint64_t er15;                /* E(R15) = E(L16) */
-  uint64_t l15;                 /* L15 (as in DES standard) */
-  uint64_t rk;                  /* Value of last round key */
-
-  r16l16 = des_ip (ct);         /* Compute R16|L16 */
-  l16 = des_right_half (r16l16);        /* Extract right half */
-  r16 = des_left_half (r16l16); /* Extract left half */
-  er15 = des_e (l16);           /* Compute E(R15) = E(L16) */
-  /* For all guesses (64). rk is a 48 bits last round key with all 6-bits
-   * subkeys equal to current guess g (nice trick, isn't it?). */
-  for (g = 0, rk = UINT64_C (0); g < 64; g++, rk += UINT64_C (0x041041041041))
-    {
-      l15 = r16 ^ des_p (des_sboxes (er15 ^ rk));       /* Compute L15 */
-      d[g] = (l15 >> (32 - target_bit)) & UINT64_C (1); /* Extract value of target bit */
-    }                           /* End for guesses */
-}
-
-void
 dpa_attack (void)
 {
-  int i;                        /* Loop index */
-  int n;                        /* Number of traces. */
-  int g;                        /* Guess on a 6-bits subkey */
-  int idx;                      /* Argmax (index of sample with maximum value in a trace) */
-  int d[64];                    /* Decisions on the target bit */
-
-  float *t;                     /* Power trace */
-  float max;                    /* Max sample value in a trace */
-  float *t0[64];                /* Power traces for the zero-sets (one per guess) */
-  float *t1[64];                /* Power traces for the one-sets (one per guess) */
-
-  int n0[64];                   /* Number of power traces in the zero-sets (one per guess) */
-  int n1[64];                   /* Number of power traces in the one-sets (one per guess) */
-
-  uint64_t ct;                  /* Ciphertext */
-  tr_pcc_context pcc_ctx;
-  float *pcc, best_pcc;
-
-  n = tr_number (ctx);          /* Number of traces in context */
-  
-  best_guess = 0;               /* Initialize best guess */
-  best_max = 0.0;               /* Initialize best maximum sample */
-  best_idx = 0;                 /* Initialize best argmax (index of maximum sample) */
-  
-  for (g = 0; g < 64; g++)
-  {
-  	pcc_ctx = tr_pcc_init(64, 1);
-	for (i = 0; i < n; i++)       /* For all experiments */
-	{
-		t = tr_trace (ctx, i);    /* Get power trace */
-		ct = tr_ciphertext (ctx, i);      /* Get ciphertext */
-		decision (ct, d);         /* Compute the 64 decisions */
-		
-		tr_pcc_insert_x(pcc_ctx, t);
-		tr_pcc_insert_y(pcc_ctx, 1, d[g]);
-	}                           /* End for experiments */
-	tr_pcc_consolidate(ctx);
-	pcc = tr_pcc_get_pcc(ctx, 0);
-	if (*pcc > best_pcc){
-		best_pcc = *pcc;
-		best_guess = g;
-    }
-  }                       /* End for guesses */
+	int i;                        /* Loop index */
+	int n;                        /* Number of traces. */
+	int g;                        /* Guess on a 6-bits subkey */
+	int trace_len;                      /* Argmax (index of sample with maximum value in a trace) */
 	
-  
-  /* Free allocated traces */
-  for (g = 0; g < 64; g++)      /* For all guesses for 6-bits subkey */
-    {
-      tr_free_trace (ctx, t0[g]);
-      tr_free_trace (ctx, t1[g]);
-    }
+	float *pcc_vector;              
+	float *t;                     /* Power trace */
+	float max;                    
+
+	uint64_t ct;                  /* Ciphertext */
+	uint64_t best_key;   
+	tr_pcc_context pcc_ctx;
+
+	n = tr_number (ctx);          /* Number of traces in context */
+	trace_len = tr_length(ctx);
+    for (sbox = 0; sbox >= 0; sbox--){
+		pcc_ctx = tr_pcc_init(trace_len, 64);
+		for (i=0; i<n; i++){
+			r16l16 = des_ip (ct[i]); /* undoes final permutation */
+			l16 = des_right_half (r16l16); /* extracts right half */
+			t = tr_trace (ctx, i);
+			tr_pcc_insert_x(pcc_ctx, t);
+			for (g = 0; g < 64; g++){
+				key = ((unsigned long long) g) << (42 - 6*sbox); 
+				sbo = des_sboxes (des_e (l16) ^ key);  
+				hw = hamming_weight (sbo); 
+				tr_pcc_insert_y(pcc_ctx, g, hw);
+			}
+		}
+		pcc_consolidate(ctx);
+		for (g=0; g<64; g++){
+			pcc_vector = pcc_get_pcc(ctx, g);
+			for(i=0; i<trace_len; i++){
+				if (pcc_vector[i] > max){
+					max = pcc_vector[i];
+					best_key = key;
+				}
+			}
+		}
+		pcc_free(ctx);
+		
+    } //sbox
 }
