@@ -45,65 +45,24 @@ information see the LICENCE-fr.txt or LICENSE-en.txt files.
 
 #include <tr_pcc.h>
 
-/* The P permutation table, as in the standard. The first entry (16) is the
- * position of the first (leftmost) bit of the result in the input 32 bits word.
- * Used to convert target bit index into SBox index (just for printed summary
- * after attack completion). */
-int p_table[32] = {
-  16, 7, 20, 21,
-  29, 12, 28, 17,
-  1, 15, 23, 26,
-  5, 18, 31, 10,
-  2, 8, 24, 14,
-  32, 27, 3, 9,
-  19, 13, 30, 6,
-  22, 11, 4, 25
-};
-
 tr_context ctx;                 /* Trace context (see traces.h) */
-int target_bit;                 /* Index of target bit. */
-int target_sbox;                /* Index of target SBox. */
-int best_guess;                 /* Best guess */
-int best_idx;                   /* Best argmax */
-float best_max;                 /* Best max sample value */
-float *dpa[64];                 /* 64 DPA traces */
 
-/* A function to allocate cipher texts and power traces, read the
- * datafile and store its content in allocated context. */
 void read_datafile (char *name, int n);
-
-/* Compute the average power trace of the traces context ctx, print it in file
- * <prefix>.dat and print the corresponding gnuplot command in <prefix>.cmd. In
- * order to plot the average power trace, type: $ gnuplot -persist <prefix>.cmd
- * */
-void average (char *prefix);
-
-/* Decision function: takes a ciphertext and returns an array of 64 values for
- * an intermediate DES data, one per guess on a 6-bits subkey. In this example
- * the decision is the computed value of bit index <target_bit> of L15. Each of
- * the 64 decisions is thus 0 or 1.*/
-void decision (uint64_t ct, int d[64]);
-
-/* Apply P. Kocher's DPA algorithm based on decision function. Computes 64 DPA
- * traces dpa[0..63], best_guess (6-bits subkey corresponding to highest DPA
- * peak), best_idx (index of sample with maximum value in best DPA trace) and
- * best_max (value of sample with maximum value in best DPA trace). */
 void dpa_attack (void);
 
 int
 main (int argc, char **argv)
 {
   int n;                        /* Number of experiments to use. */
-  int g;                        /* Guess on a 6-bits subkey */
 
   if (!des_check ())
     {
       ERROR (-1, "DES functional test failed");
     }
 
-  if (argc != 4)
+  if (argc != 3)
     {
-      ERROR (-1, "usage: dpa <file> <n> <b>\n  <file>: name of the traces file in HWSec format\n          (e.g. /datas/teaching/courses/HWSec/labs/data/HWSecTraces10000x00800.hws)\n  <n>: number of experiments to use\n  <b>: index of target bit in L15 (1 to 32, as in DES standard)\n");
+      ERROR (-1, "usage: dpa <file> <n>\n  <file>: name of the traces file in HWSec format\n          (e.g. /datas/teaching/courses/HWSec/labs/data/HWSecTraces10000x00800.hws)\n  <n>: number of experiments to use\n");
     }
 
   n = atoi (argv[2]); /* Number of experiments to use */
@@ -118,10 +77,6 @@ main (int argc, char **argv)
    
   dpa_attack ();
 
-  for (g = 0; g < 64; g++)      /* For all guesses for 6-bits subkey */
-    {
-      tr_free_trace (ctx, dpa[g]);
-    }
   tr_free (ctx);                /* Free traces context */
   return 0;                     /* Exits with "everything went fine" status. */
 }
@@ -147,42 +102,53 @@ dpa_attack (void)
 	int n;                        /* Number of traces. */
 	int g;                        /* Guess on a 6-bits subkey */
 	int trace_len;                      /* Argmax (index of sample with maximum value in a trace) */
+	int sbox;
+	int hw;
 	
 	float *pcc_vector;              
 	float *t;                     /* Power trace */
-	float max;                    
+	float max = -1;                    
 
 	uint64_t ct;                  /* Ciphertext */
-	uint64_t best_key;   
+	uint64_t final_key=0, best_key=0, key=0;   
 	tr_pcc_context pcc_ctx;
+	
+	uint64_t r16l16;    /* Output of last round, before final permutation. */
+	uint64_t l16;       /* Right half of r16l16. */
+	uint64_t sbo;       /* Output of SBoxes during last round. */
 
 	n = tr_number (ctx);          /* Number of traces in context */
 	trace_len = tr_length(ctx);
-    for (sbox = 0; sbox >= 0; sbox--){
+    for (sbox = 7; sbox >= 0; sbox--){
 		pcc_ctx = tr_pcc_init(trace_len, 64);
 		for (i=0; i<n; i++){
-			r16l16 = des_ip (ct[i]); /* undoes final permutation */
+			ct = tr_ciphertext(ctx, i);
+			r16l16 = des_ip (ct); /* undoes final permutation */
 			l16 = des_right_half (r16l16); /* extracts right half */
+			
 			t = tr_trace (ctx, i);
 			tr_pcc_insert_x(pcc_ctx, t);
 			for (g = 0; g < 64; g++){
-				key = ((unsigned long long) g) << (42 - 6*sbox); 
-				sbo = des_sboxes (des_e (l16) ^ key);  
+				key = ((uint64_t) g) << (42 - 6*sbox); 
+				final_key |= key;
+				sbo = des_sboxes (des_e (l16) ^ final_key);  
 				hw = hamming_weight (sbo); 
+				
 				tr_pcc_insert_y(pcc_ctx, g, hw);
 			}
 		}
-		pcc_consolidate(ctx);
+		tr_pcc_consolidate(pcc_ctx);
 		for (g=0; g<64; g++){
-			pcc_vector = pcc_get_pcc(ctx, g);
+			pcc_vector = tr_pcc_get_pcc(pcc_ctx, g);
+			max = 0;
 			for(i=0; i<trace_len; i++){
 				if (pcc_vector[i] > max){
 					max = pcc_vector[i];
-					best_key = key;
+					best_key = ((uint64_t) g) << (42 - 6*sbox);
 				}
 			}
 		}
-		pcc_free(ctx);
-		
-    } //sbox
+		tr_pcc_free(pcc_ctx);
+		printf ("%012" PRIx64 "\n", best_key);	
+    }
 }
