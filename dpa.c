@@ -42,6 +42,7 @@ information see the LICENCE-fr.txt or LICENSE-en.txt files.
 #include <utils.h>
 #include <traces.h>
 #include <des.h>
+#include <km.h>
 
 #include <tr_pcc.h>
 
@@ -110,12 +111,15 @@ dpa_attack (void)
 	float max = -1;                    
 
 	uint64_t ct;                  /* Ciphertext */
-	uint64_t final_key=0, best_key=0, key=0;   
+	uint64_t final_key=0, best_key=0, key=0, try_key, ks[16];   
 	tr_pcc_context pcc_ctx;
 	
 	uint64_t r16l16;    /* Output of last round, before final permutation. */
 	uint64_t l16;       /* Right half of r16l16. */
 	uint64_t sbo;       /* Output of SBoxes during last round. */
+	uint64_t dummy;
+	
+	des_key_manager km;
 
 	n = tr_number (ctx);          /* Number of traces in context */
 	trace_len = tr_length(ctx);
@@ -139,7 +143,6 @@ dpa_attack (void)
 		tr_pcc_consolidate(pcc_ctx);
 		for (g=0; g<64; g++){
 			pcc_vector = tr_pcc_get_pcc(pcc_ctx, g);
-			max = 0;
 			for(i=0; i<trace_len; i++){
 				if (pcc_vector[i] > max){
 					max = pcc_vector[i];
@@ -148,8 +151,14 @@ dpa_attack (void)
 			}
 		}
 		tr_pcc_free(pcc_ctx);
-		printf("pcc max: %f\n",max);
+
 		final_key |= best_key;
-		printf ("%012" PRIx64 "\n", final_key);	
     }
+	printf ("%012" PRIx64 "\n", final_key);	
+	key = tr_key (ctx); /* Extract 64 bits secret key from context */
+	des_ks (ks, key);   /* Compute key schedule */
+	if (final_key == ks[15])  /* If guessed 16th round key matches actual 16th round key */
+		printf ("We got it!!!\n"); /* Cheers */
+	else
+		printf ("Too bad...\n");   /* Cry */
 }
