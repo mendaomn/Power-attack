@@ -154,11 +154,9 @@ dpa_attack (void)
 
 		final_key |= best_key;
     }
-	printf ("%012" PRIx64 "\n", final_key);	
-	key = tr_key (ctx); /* Extract 64 bits secret key from context */
-	des_ks (ks, key);   /* Compute key schedule */
-	if (final_key == ks[15])  /* If guessed 16th round key matches actual 16th round key */
-		printf ("We got it!!!\n"); /* Cheers */
-	else
-		printf ("Too bad...\n");   /* Cry */
+	key = tr_key (ctx); 
+	des_ks (ks, key);   
+	if (final_key == ks[15]) 
+			printf ("%012" PRIx64 "\n", final_key);	
+
 }
