@@ -111,15 +111,15 @@ dpa_attack (void)
 	float max = -1;                    
 
 	uint64_t ct;                  /* Ciphertext */
-	uint64_t final_key=0, best_key=0, key=0, try_key, ks[16];   
+	uint64_t final_key=0, best_key=0, key=0, ks[16];   
 	tr_pcc_context pcc_ctx;
 	
 	uint64_t r16l16;    /* Output of last round, before final permutation. */
-	uint64_t l16;       /* Right half of r16l16. */
+	uint64_t l16, r16;       /* Right half of r16l16. */
+	uint64_t l15_n_p;   /* L15 after undoing permutation P */
 	uint64_t sbo;       /* Output of SBoxes during last round. */
-	uint64_t dummy;
+	uint64_t mask = 15;
 	
-	des_key_manager km;
 
 	n = tr_number (ctx);          /* Number of traces in context */
 	trace_len = tr_length(ctx);
@@ -129,14 +129,14 @@ dpa_attack (void)
 			ct = tr_ciphertext(ctx, i);
 			r16l16 = des_ip (ct); /* undoes final permutation */
 			l16 = des_right_half (r16l16); /* extracts right half */
-			
+			r16 = des_left_half (r16l16);
 			t = tr_trace (ctx, i);
 			tr_pcc_insert_x(pcc_ctx, t);
 			for (g = 0; g < 64; g++){
 				key = ((uint64_t) g) << (42 - 6*sbox); 
-				sbo = des_sboxes (des_e (l16) ^ (final_key | key));  
-				hw = hamming_weight (sbo); 
-				
+				sbo = des_sboxes (des_e (l16) ^ (/*final_key |*/ key));  
+				l15_n_p = des_n_p(r16) ^ (sbo & mask);
+				hw = hamming_distance (l15_n_p & mask, des_n_p(l16) & mask); 	
 				tr_pcc_insert_y(pcc_ctx, g, hw);
 			}
 		}
@@ -151,12 +151,12 @@ dpa_attack (void)
 			}
 		}
 		tr_pcc_free(pcc_ctx);
-
 		final_key |= best_key;
+		mask <<= 4;
     }
-	key = tr_key (ctx); /* Extract 64 bits secret key from context */
-	des_ks (ks, key);   /* Compute key schedule */
-	if (final_key == ks[15])  /* If guessed 16th round key matches actual 16th round key */
+	key = tr_key (ctx); 
+	des_ks (ks, key);   
+	if (final_key == ks[15]) 
 			printf ("%012" PRIx64 "\n", final_key);	
 
 }
