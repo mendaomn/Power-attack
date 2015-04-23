@@ -134,9 +134,10 @@ dpa_attack (void)
 			tr_pcc_insert_x(pcc_ctx, t);
 			for (g = 0; g < 64; g++){
 				key = ((uint64_t) g) << (42 - 6*sbox); 
-				sbo = des_sboxes (des_e (l16) ^ (/*final_key |*/ key));  
-				l15_n_p = des_n_p(r16) ^ (sbo & mask);
-				hw = hamming_distance (l15_n_p & mask, des_n_p(l16) & mask); 	
+				sbo = des_sboxes (des_e (l16) ^ (final_key | key));  
+				l15_n_p = des_n_p(r16 ^ des_p(sbo)) /*& mask*/;
+				hw = hamming_distance (l15_n_p, des_n_p(l16));
+				/*hw = hamming_weight(sbo);*/
 				tr_pcc_insert_y(pcc_ctx, g, hw);
 			}
 		}
