@@ -118,7 +118,7 @@ dpa_attack (void)
 	uint64_t l16, r16;       /* Right half of r16l16. */
 	uint64_t l15;   /* L15 after undoing permutation P */
 	uint64_t sbo;       /* Output of SBoxes during last round. */
-	uint64_t mask = 15;
+	uint64_t mask6 = 63, mask4 = 15;
 	
 
 	n = tr_number (ctx);          /* Number of traces in context */
@@ -134,10 +134,10 @@ dpa_attack (void)
 			tr_pcc_insert_x(pcc_ctx, t);
 			for (g = 0; g < 64; g++){
 				key = ((uint64_t) g) << (42 - 6*sbox); 
-				sbo = des_sboxes (des_e (l16) ^ (final_key | key)); 
+				sbo = des_sboxes (des_e (l16) ^ (/*final_key |*/ key)); 
 				l15 = r16 ^ des_p(sbo);
-				hw = hamming_distance (l15, l16);
-				hw = hamming_weight(sbo);
+				hw = hamming_distance (l15 & mask, l16 & mask);	
+				/*hw = hamming_weight(sbo & mask);*/
 				tr_pcc_insert_y(pcc_ctx, g, hw);
 			}
 		}
@@ -153,7 +153,8 @@ dpa_attack (void)
 		}
 		tr_pcc_free(pcc_ctx);
 		final_key |= best_key;
-		mask <<= 4;
+		mask6 <<= 6;
+    	mask4 <<= 4;
     }
 	key = tr_key (ctx); 
 	des_ks (ks, key);   

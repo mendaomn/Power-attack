@@ -1,11 +1,19 @@
 AVERAGE.CMD
 
 **** What do you think of the average trace? How many clock periods can you see? Can you identify the beginning and the end of the DES encipherment? 
-**** Have a look at the summary the program printed. To which SBox does the target bit correspond? Is it correct? 
+
+By looking at the plot of the average trace one can identify 32 clock periods; it would be expected to see the first 8 ones showing the loading process of the input value, the following 16 cycles showing the actual encipherment and the final 8 ones to output the result. Indeed that's what it could be seen, every 25 points there's one clock stroke and it can be spotted the beginning and the end of the 16 DES rounds from point 200 to point 600 in the x axis.
+
+
+**** Have a look at the summary the program printed. To which SBox does the target bit correspond? Is it correct?
+
+The target bit is #1 but the SBox target is #4. That's not correct if one thinks at the bits in an ordered fashion, meaning before the P permutation of the output of the SBoxes.
+
+ 
 **** Note the best guess and the height of the DPA peak. What do you think of this height, compared to the average power trace? 
 **** Note also the index of this maximum. What do you think of it?
 
-
+----------------------------
 
 DPA.CMD
 
