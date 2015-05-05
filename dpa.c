@@ -117,6 +117,7 @@ dpa_attack (void)
 	uint64_t r16l16;    /* Output of last round, before final permutation. */
 	uint64_t l16, r16;       /* Right half of r16l16. */
 	uint64_t l15;   /* L15 after undoing permutation P */
+	uint64_t l16np, l15np;
 	uint64_t sbo;       /* Output of SBoxes during last round. */
 	uint64_t mask6 = 63, mask4 = 15;
 	
@@ -136,8 +137,10 @@ dpa_attack (void)
 				key = ((uint64_t) g) << (42 - 6*sbox); 
 				sbo = des_sboxes (des_e (l16) ^ (/*final_key |*/ key)); 
 				l15 = r16 ^ des_p(sbo);
-				hw = hamming_distance (l15 & mask, l16 & mask);	
-				/*hw = hamming_weight(sbo & mask);*/
+				l15np = des_n_p(l15) & mask4;
+				l16np = des_n_p(l16) & mask4;
+				hw = hamming_distance (l15np, l16np);	
+				/*hw = hamming_weight(sbo & mask4);*/
 				tr_pcc_insert_y(pcc_ctx, g, hw);
 			}
 		}

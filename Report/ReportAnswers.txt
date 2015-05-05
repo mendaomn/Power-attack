@@ -12,9 +12,11 @@ The output of the program identifies the target bit is #1 but the SBox target is
  
 **** Note the best guess and the height of the DPA peak. What do you think of this height, compared to the average power trace? 
 
-
+Very high compared to the average -> loses much information
 
 **** Note also the index of this maximum. What do you think of it?
+
+The peak is in the loading phase, not interesting from our point of view. Should trim traces.
 
 ----------------------------
 
