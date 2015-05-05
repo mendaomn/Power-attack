@@ -1,0 +1,98 @@
+\documentclass[11pt]{article} % use larger type; default would be 10pt
+
+%%% PAGE DIMENSIONS
+\usepackage{geometry} % to change the page dimensions
+\geometry{a4paper} % or letterpaper (US) or a5paper or....
+\geometry{margin=1in} % for example, change the margins to 2 inches all round
+
+%% CODE SNIPPETS
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Java,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+%%% The "real" document content comes below...
+
+\title{Timing attack against a DES implementation}
+\author{Alessandro Menduni}
+%\date{} % Activate to display a given date or no date (if empty),
+         % otherwise the current date is printed 
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+A timing attack is a side channel attack, which consists in exploiting information given by the time taken by the hardware to execute a cryptographic alghoritm. In particular, it is taken into account the dependancy between the input provided to the system and the time required to complete the operation, thus, by the use of precise measurements, an attacker can procede backwards from the output to the input. In this report it will be considered the attack against a poor implementation of the P permutation of the DES library.
+
+\section{The attack target: the P permutation}
+As stated in the introduction, the main target of the attack will be the implementation of the P permutation that is performed on the output of the SBoxes; this stage of the algorithm is implemented in such a way that it makes it feasible to exploit time measurements to deduce the input key of the 16th round of the DES; in fact, as we can see in the snippet below, the time needed by the hardware to perform the permutation depends on the number of bits set to 1, since it procedes bit by bit and, everytime it encounters a bit to 0 in the input string, it skips all the loops and it copies directly such bit to the result string.
+
+\vspace{1 mm}
+\begin{lstlisting}
+// Permutation table. Input bit #16 is output bit #1 and
+// input bit #25 is output  bit #32.
+p_table = {16,  7, 20, 21,
+           29, 12, 28, 17,
+            1, 15, 23, 26,
+            5, 18, 31, 10,
+            2,  8, 24, 14,
+           32, 27,  3,  9,
+           19, 13, 30,  6,
+           22, 11,  4, 25};
+
+p_permutation(val) {
+  res = 0;                    // Initialize the result to all zeros
+  for i in 1 to 32 {          // For all input bits #i (32 of them)
+    if get_bit(i, val) == 1   // If input bit #i is set
+      for j in 1 to 32        // For all 32 output bits #j (32 of them)
+	if p_table[j] == i    // If output bits #j is input bit #i
+          k = j;              // Remember output bit index
+        endif
+      endfor                  // output bit #k is now input bit #i
+      set_bit(k, res);        // Set bit #k of result
+    endif
+  endfor
+  return res;                 // Return result
+}
+\end{lstlisting}
+
+\section{Attack's working principles}
+The reasoning behind the attack is the following: 
+\begin{itemize}
+  \item Since the attacker owns the cipertexts, she can extract L16 and combine it with her guess for the 16th round key;
+  \item The result of such a combination can then be passed to the SBoxes, and their output would present a given quantity of 1s, which is hopefully reflected in the timing measurments for the ciphertexts - meaning, the higher the count of 1s, the higher the corresponding timing;
+  \item In order to make the relationship between the timing measurments and the number of 1s in the output of the SBoxes apparent, the attack tries to find the key for which the correlation between all the timing values and all the hamming weights is the highest possible. In other words, it is computed some kind of ranking for every key, in a way that associates an higher rank to the key for which the link between the timing values and the quantity of 1s is stronger.
+\end{itemize}
+A computationally feasible procedure would carry on the attack on one SBox at a time, as follows:
+\begin{itemize}
+	\item It is generated every possible combination of the first 6 bits of the key
+	\item For every key generated as such, it is computed the correlation between all the measurements and the corresponding hamming weights
+	\item It is kept as good the key whom correlation is the highest 
+	\item Repeats for the next 6 bits of the key until all the 48 bits of 16th round key have been "guessed"
+\end{itemize}
+At this point the remaining bits of the 64bits key can be brute-forced by inverting the key schedule algorithm and trying all the keys over a couple plaintext-ciphertext, which is needed in order for the attack to automatically recognise whether it's been successful or not.
+
+\section{The ranking system}
+Two systems have been tried out for such a purpose. The first one consists in computing the difference between the average of the timing values for the 
+
+\end{document}
+
