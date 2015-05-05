@@ -99,33 +99,19 @@ read_datafile (char *name, int n)
 void
 dpa_attack (void)
 {
-	int i;                        /* Loop index */
-	int n;                        /* Number of traces. */
-	int g;                        /* Guess on a 6-bits subkey */
-	int trace_len;                      /* Argmax (index of sample with maximum value in a trace) */
-	int sbox;
-	int hw;
+	int i, n, g, trace_len, sbox, hw;
+	float *pcc_vector, *t, max = -1;               
+	uint64_t ct, final_key=0, best_key=0, key=0, ks[16];   
+	uint64_t r16l16, l16, r16, l15, l16np, l15np, sbo, mask6 = 63, mask4 = 15;
+	tr_pcc_context pcc_ctx;	
 	
-	float *pcc_vector;              
-	float *t;                     /* Power trace */
-	float max = -1;                    
-
-	uint64_t ct;                  /* Ciphertext */
-	uint64_t final_key=0, best_key=0, key=0, ks[16];   
-	tr_pcc_context pcc_ctx;
-	
-	uint64_t r16l16;    /* Output of last round, before final permutation. */
-	uint64_t l16, r16;       /* Right half of r16l16. */
-	uint64_t l15;   /* L15 after undoing permutation P */
-	uint64_t l16np, l15np;
-	uint64_t sbo;       /* Output of SBoxes during last round. */
-	uint64_t mask6 = 63, mask4 = 15;
-	
-
 	n = tr_number (ctx);          /* Number of traces in context */
 	trace_len = tr_length(ctx);
+
+/* Attacks one sbox at a time */	
     for (sbox = 7; sbox >= 0; sbox--){
 		pcc_ctx = tr_pcc_init(trace_len, 64);
+
 		for (i=0; i<n; i++){
 			ct = tr_ciphertext(ctx, i);
 			r16l16 = des_ip (ct); /* undoes final permutation */	
@@ -133,9 +119,9 @@ dpa_attack (void)
 			r16 = des_left_half (r16l16);
 			t = tr_trace (ctx, i);
 			tr_pcc_insert_x(pcc_ctx, t);
-			for (g = 0; g < 64; g++){
-				key = ((uint64_t) g) << (42 - 6*sbox); 
-				sbo = des_sboxes (des_e (l16) ^ (/*final_key |*/ key)); 
+
+			for (g = 0, key = UINT64_C(0); g < 64; g++, key += UINT64_C (0x041041041041)){
+				sbo = des_sboxes (des_e (l16) ^ key); 
 				l15 = r16 ^ des_p(sbo);
 				l15np = des_n_p(l15) & mask4;
 				l16np = des_n_p(l16) & mask4;
@@ -144,9 +130,13 @@ dpa_attack (void)
 				tr_pcc_insert_y(pcc_ctx, g, hw);
 			}
 		}
+
 		tr_pcc_consolidate(pcc_ctx);
+
+		/* Finds the best key among the pcc computed */
 		for (g=0; g<64; g++){
 			pcc_vector = tr_pcc_get_pcc(pcc_ctx, g);
+
 			for(i=0; i<trace_len; i++){
 				if (pcc_vector[i] > max){
 					max = pcc_vector[i];
@@ -154,11 +144,15 @@ dpa_attack (void)
 				}
 			}
 		}
+
 		tr_pcc_free(pcc_ctx);
+		
 		final_key |= best_key;
 		mask6 <<= 6;
     	mask4 <<= 4;
     }
+
+	/* Checks 48 bit correctness against the prestored correct key */
 	key = tr_key (ctx); 
 	des_ks (ks, key);   
 	if (final_key == ks[15]) 
