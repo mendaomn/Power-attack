@@ -116,7 +116,7 @@ dpa_attack (void)
 	
 	uint64_t r16l16;    /* Output of last round, before final permutation. */
 	uint64_t l16, r16;       /* Right half of r16l16. */
-	uint64_t l15_n_p;   /* L15 after undoing permutation P */
+	uint64_t l15;   /* L15 after undoing permutation P */
 	uint64_t sbo;       /* Output of SBoxes during last round. */
 	uint64_t mask = 15;
 	
@@ -127,17 +127,17 @@ dpa_attack (void)
 		pcc_ctx = tr_pcc_init(trace_len, 64);
 		for (i=0; i<n; i++){
 			ct = tr_ciphertext(ctx, i);
-			r16l16 = des_ip (ct); /* undoes final permutation */
-			l16 = des_right_half (r16l16); /* extracts right half */
+			r16l16 = des_ip (ct); /* undoes final permutation */	
+			l16 = des_right_half (r16l16); /* extracts right half */	
 			r16 = des_left_half (r16l16);
 			t = tr_trace (ctx, i);
 			tr_pcc_insert_x(pcc_ctx, t);
 			for (g = 0; g < 64; g++){
 				key = ((uint64_t) g) << (42 - 6*sbox); 
-				sbo = des_sboxes (des_e (l16) ^ (final_key | key));  
-				l15_n_p = des_n_p(r16 ^ des_p(sbo)) /*& mask*/;
-				hw = hamming_distance (l15_n_p, des_n_p(l16));
-				/*hw = hamming_weight(sbo);*/
+				sbo = des_sboxes (des_e (l16) ^ (final_key | key)); 
+				l15 = r16 ^ des_p(sbo);
+				hw = hamming_distance (l15, l16);
+				hw = hamming_weight(sbo);
 				tr_pcc_insert_y(pcc_ctx, g, hw);
 			}
 		}
