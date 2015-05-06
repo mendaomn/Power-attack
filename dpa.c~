@@ -99,17 +99,20 @@ read_datafile (char *name, int n)
 void
 dpa_attack (void)
 {
-	int i, n, g, trace_len, sbox, hw;
+	int i, n, g, trace_len, sbox, hd;
 	float *pcc_vector, *t, max = -1;               
-	uint64_t ct, final_key=0, best_key=0, key=0, ks[16];   
-	uint64_t r16l16, l16, r16, l15, l16np, l15np, sbo, mask6 = 63, mask4 = 15;
+	uint64_t ct, final_key=0, best_key=0, key, ks[16];   
+	uint64_t r16l16, l16, r16, l15, l16np, l15np, sbo, p, mask6 = 63, mask4 = 15;
 	tr_pcc_context pcc_ctx;	
 	
 	n = tr_number (ctx);          /* Number of traces in context */
 	trace_len = tr_length(ctx);
-
+    tr_trim(ctx, 575, 25);
+    trace_len = 25;
 /* Attacks one sbox at a time */	
-    for (sbox = 7; sbox >= 0; sbox--){
+    for (sbox = 0; sbox < 8; sbox++){
+    	best_key=0;
+    	max=-1;
 		pcc_ctx = tr_pcc_init(trace_len, 64);
 
 		for (i=0; i<n; i++){
@@ -117,30 +120,32 @@ dpa_attack (void)
 			r16l16 = des_ip (ct); /* undoes final permutation */	
 			l16 = des_right_half (r16l16); /* extracts right half */	
 			r16 = des_left_half (r16l16);
+			
 			t = tr_trace (ctx, i);
 			tr_pcc_insert_x(pcc_ctx, t);
-
+			
 			for (g = 0, key = UINT64_C(0); g < 64; g++, key += UINT64_C (0x041041041041)){
 				sbo = des_sboxes (des_e (l16) ^ key); 
 				l15 = r16 ^ des_p(sbo);
 				l15np = des_n_p(l15) & mask4;
 				l16np = des_n_p(l16) & mask4;
-				hw = hamming_distance (l15np, l16np);	
-				/*hw = hamming_weight(sbo & mask4);*/
-				tr_pcc_insert_y(pcc_ctx, g, hw);
+				hd = hamming_distance (l15np, l16np);	
+
+				tr_pcc_insert_y(pcc_ctx, g, hd);
 			}
 		}
-
 		tr_pcc_consolidate(pcc_ctx);
 
 		/* Finds the best key among the pcc computed */
-		for (g=0; g<64; g++){
+		for (g = 0, key = UINT64_C(0); g < 64; g++, key += UINT64_C (0x041041041041)){
 			pcc_vector = tr_pcc_get_pcc(pcc_ctx, g);
 
 			for(i=0; i<trace_len; i++){
 				if (pcc_vector[i] > max){
 					max = pcc_vector[i];
-					best_key = ((uint64_t) g) << (42 - 6*sbox);
+					best_key = key & mask6;
+					/*printf ("%012" PRIx64 " ", rk);
+					printf ("%012" PRIx64 "\n", best_key);*/
 				}
 			}
 		}
@@ -152,7 +157,7 @@ dpa_attack (void)
     	mask4 <<= 4;
     }
 
-	/* Checks 48 bit correctness against the prestored key */
+	/* Checks 48 bit correctness against the prestored correct key */
 	key = tr_key (ctx); 
 	des_ks (ks, key);   
 	if (final_key == ks[15]) 
