@@ -1,7 +1,7 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2014.4.19)  4 MAY 2015 22:20
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2014.4.19)  6 MAY 2015 21:07
 entering extended mode
-**C:/Users/Alessandro/Documents/GitHub/Timing-attack/Report/Report.tex
-(C:/Users/Alessandro/Documents/GitHub/Timing-attack/Report/Report.tex
+**C:/Users/Alessandro/Documents/GitHub/Power-attack/Report/Report.tex
+(C:/Users/Alessandro/Documents/GitHub/Power-attack/Report/Report.tex
 LaTeX2e <2011/06/27>
 Babel <v3.8m> and hyphenation patterns for english, afrikaans, ancientgreek, ar
 abic, armenian, assamese, basque, bengali, bokmal, bulgarian, catalan, coptic, 
@@ -109,7 +109,7 @@ Package: ltxcmds 2011/11/09 v1.22 LaTeX kernel commands for general use (HO)
 ("D:\OS Assistant\Programmi\MikTeX\tex\latex\listings\lstlang1.sty"
 File: lstlang1.sty 2014/09/06 1.5e listings language file
 )
-(C:\Users\Alessandro\Documents\GitHub\Timing-attack\Report\Report.aux)
+(C:\Users\Alessandro\Documents\GitHub\Power-attack\Report\Report.aux)
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 40.
 LaTeX Font Info:    ... okay on input line 40.
 LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 40.
@@ -178,36 +178,33 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <8> on input line 41.
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <6> on input line 41.
- [1
-
-{C:/Users/Alessandro/AppData/Local/MiKTeX/2.9/pdftex/config/pdftex.map}]
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 81.
-
-("D:\OS Assistant\Programmi\MikTeX\tex\latex\base\omscmr.fd"
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 52.
+ ("D:\OS Assistant\Programmi\MikTeX\tex\latex\base\omscmr.fd"
 File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10.95> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 81.
- [2]
-(C:\Users\Alessandro\Documents\GitHub\Timing-attack\Report\Report.aux) ) 
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 52.
+ [1
+
+{C:/Users/Alessandro/AppData/Local/MiKTeX/2.9/pdftex/config/pdftex.map}] [2]
+(C:\Users\Alessandro\Documents\GitHub\Power-attack\Report\Report.aux) ) 
 Here is how much of TeX's memory you used:
- 2830 strings out of 493921
- 40288 string characters out of 3145262
- 169546 words of memory out of 3000000
- 6139 multiletter control sequences out of 15000+200000
- 8005 words of font info for 29 fonts, out of 3000000 for 9000
+ 2753 strings out of 493921
+ 39503 string characters out of 3145262
+ 127546 words of memory out of 3000000
+ 6063 multiletter control sequences out of 15000+200000
+ 7837 words of font info for 28 fonts, out of 3000000 for 9000
  841 hyphenation exceptions out of 8191
- 26i,6n,40p,704b,1032s stack positions out of 5000i,500n,10000p,200000b,50000s
-<D:/OS 
-Assistant/Programmi/MikTeX/fonts/type1/public/amsfonts/cm/cmbx12.pfb><D:/OS Ass
-istant/Programmi/MikTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><D:/OS Assista
-nt/Programmi/MikTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><D:/OS Assistant/P
-rogrammi/MikTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><D:/OS Assistant/Progr
-ammi/MikTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><D:/OS Assistant/Programm
-i/MikTeX/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on Report.pdf (2 pages, 91365 bytes).
+ 26i,6n,40p,1306b,219s stack positions out of 5000i,500n,10000p,200000b,50000s
+<D:/OS A
+ssistant/Programmi/MikTeX/fonts/type1/public/amsfonts/cm/cmbx12.pfb><D:/OS Assi
+stant/Programmi/MikTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><D:/OS Assistan
+t/Programmi/MikTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><D:/OS Assistant/Pr
+ogrammi/MikTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><D:/OS Assistant/Progra
+mmi/MikTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb>
+Output written on Report.pdf (2 pages, 75331 bytes).
 PDF statistics:
- 33 PDF objects out of 1000 (max. 8388607)
+ 29 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 
