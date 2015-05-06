@@ -31,3 +31,11 @@ The red trace presents its highest peak at the index 105, this means that our st
 Remark: because it takes some time to run all these 32 experiments, join your efforts. Then, analyze your results: for the same group of 6 bits you should have 4 best guesses. They should be identical. Is it the case? Look at the maximum amplitudes and at the maximum positions. What do you think of this attack? Is it a Hamming distance or a Hamming weight one? Do you have ideas to make it more efficient? If yes, keep them for you (it's a competition, after all) and test them.
 
 PRO TIP: vengono sempre diversi
+
+
+
+-------------------------
+./dpa HWSecTraces10000x00800.hws 228
+f0be2e5b242c
+
+
