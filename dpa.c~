@@ -102,7 +102,7 @@ dpa_attack (void)
 	int i, n, g, trace_len, sbox, hd;
 	float *pcc_vector, *t, max = -1;               
 	uint64_t ct, final_key=0, best_key=0, key, ks[16];   
-	uint64_t r16l16, l16, r16, l15, l16np, l15np, sbo, p, mask6 = 63, mask4 = 15;
+	uint64_t r16l16, l16, r16, l15, l16np, l15np, sbo, mask6 = 63, mask4 = 15;
 	tr_pcc_context pcc_ctx;	
 	
 	n = tr_number (ctx);          /* Number of traces in context */
@@ -130,7 +130,7 @@ dpa_attack (void)
 				l15np = des_n_p(l15) & mask4;
 				l16np = des_n_p(l16) & mask4;
 				hd = hamming_distance (l15np, l16np);	
-
+				hd = hamming_weight (sbo);
 				tr_pcc_insert_y(pcc_ctx, g, hd);
 			}
 		}

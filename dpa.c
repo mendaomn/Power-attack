@@ -130,7 +130,6 @@ dpa_attack (void)
 				l15np = des_n_p(l15) & mask4;
 				l16np = des_n_p(l16) & mask4;
 				hd = hamming_distance (l15np, l16np);	
-
 				tr_pcc_insert_y(pcc_ctx, g, hd);
 			}
 		}
