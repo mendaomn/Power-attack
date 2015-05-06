@@ -92,7 +92,11 @@ A computationally feasible procedure would carry on the attack on one SBox at a 
 At this point the remaining bits of the 64bits key can be brute-forced by inverting the key schedule algorithm and trying all the keys over a couple plaintext-ciphertext, which is needed in order for the attack to automatically recognise whether it's been successful or not.
 
 \section{The ranking system}
-Two systems have been tried out for such a purpose. The first one consists in computing the difference between the average of the timing values for the 
+Two systems have been tried out for such a purpose. The first one consists in computing the difference between the average of the timing values for the chipertexts whom hamming weight is 0 and the average of the timings for the ones whom hamming weight is 1; such a difference should be high for the correct key, since it would mean that the measurements vary depending on the number of 1s present in the output of the SBoxes according to what it is stated by the timing model. Such a method has given out medium results by yielding the correct key with more than 12000 of pairs ciphertext - timing value.
+The second method relies on the Pearson product-moment correlation coefficient to measure the desired correlation; this strategy takes into account all the chipertexts in the data set (not only the ones whom hamming weight is either 1 or 0) and it is therefore much more stable. Such PCC coefficient is computed by considering as X variable the timing measurements, whereas the Y variable contains the hamming weights of the outputs. Such a method yields the correct key with 1704 pairs chipertext - timing value. The second approach has been thus introduced in the final attack. 
+
+\section{Results and environment}
+The machine used to run the experiments is a laptop ASUS K550JK mounting an i7-4710HQ with 4GB of RAM DDR3L-1600. The data file used to test the solution is the one provided and the recovred key is 52e94a5e04dafba2 with a stable minimum of 1704 experiments needed.
 
 \end{document}
 

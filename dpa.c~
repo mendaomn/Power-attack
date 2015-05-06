@@ -110,7 +110,7 @@ dpa_attack (void)
     tr_trim(ctx, 575, 25);
     trace_len = 25;
 /* Attacks one sbox at a time */	
-    for (sbox = 0; sbox < 8; sbox++){
+    for (sbox = 7; sbox >= 0; sbox--){
     	best_key=0;
     	max=-1;
 		pcc_ctx = tr_pcc_init(trace_len, 64);
@@ -144,8 +144,6 @@ dpa_attack (void)
 				if (pcc_vector[i] > max){
 					max = pcc_vector[i];
 					best_key = key & mask6;
-					/*printf ("%012" PRIx64 " ", rk);
-					printf ("%012" PRIx64 "\n", best_key);*/
 				}
 			}
 		}

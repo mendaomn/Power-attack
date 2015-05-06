@@ -102,7 +102,7 @@ dpa_attack (void)
 	int i, n, g, trace_len, sbox, hd;
 	float *pcc_vector, *t, max = -1;               
 	uint64_t ct, final_key=0, best_key=0, key, ks[16];   
-	uint64_t r16l16, l16, r16, l15, l16np, l15np, sbo, p, mask6 = 63, mask4 = 15;
+	uint64_t r16l16, l16, r16, l15, l16np, l15np, sbo, mask6 = 63, mask4 = 15;
 	tr_pcc_context pcc_ctx;	
 	
 	n = tr_number (ctx);          /* Number of traces in context */
@@ -110,7 +110,7 @@ dpa_attack (void)
     tr_trim(ctx, 575, 25);
     trace_len = 25;
 /* Attacks one sbox at a time */	
-    for (sbox = 0; sbox < 8; sbox++){
+    for (sbox = 7; sbox >= 0; sbox--){
     	best_key=0;
     	max=-1;
 		pcc_ctx = tr_pcc_init(trace_len, 64);
